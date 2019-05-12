@@ -1,6 +1,7 @@
 import traceback, sys
 from newspaper import Article
 from micromort.utils.logger import logger
+from datetime import datetime
 
 def gen_dict_extract(key, var):
     if hasattr(var, 'items'):
@@ -20,7 +21,11 @@ def getUrl(tweet):
 
 
 class News_tweet_scraper:
-    def getUrls(tweet):
+
+    def __init__(self):
+        pass
+
+    def getUrls(self, tweet):
         try:
             urls = getUrl(tweet)
             tweet_id = tweet["id"]
@@ -36,7 +41,7 @@ class News_tweet_scraper:
             return []
 
 
-    def scrape(self, url, useRssData=True):
+    def scrape(self, url):
         try:
             article = Article(url)
             article.download()
@@ -57,15 +62,6 @@ class News_tweet_scraper:
         summary = ""
         published = ""
         title = article.title
-        if useRssData:
-            rssData = self.getRssData(url)
-            try:
-                summary = rssData.get("summary", "")
-                title = rssData.get("title", article.title)
-                published = parser.parse(rssData.get("published", ""))
-            except Exception:
-                summary = ""
-                published = ""
 
         ob = {
             "url" : article.url,

@@ -6,9 +6,11 @@ class Location_fetcher:
         self.resolver = carmen.get_resolver()
         self.resolver.load_locations()
     
-    def get_location
+    def get_location(self,doc):
         location = self.resolver.resolve_tweet(doc)
         if location is not None:
             return location
         else:
             return None
+
+

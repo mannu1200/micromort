@@ -8,20 +8,21 @@ class Classify:
         one time and the object of the Classifier should be retained in the memory of the pipeline.
     """
     def __init__(self):
-            self.life_domain_classifier = Classifier(base_path="/Users/mannumalhotra/code/work/micromort/micromort/resources/trained_models/oneVsAll_linear_SVM_mean_embeddings/")
-            self.life_domain_classifier = PolarityClassifier()
+            self.life_domain_classifier = Classifier(base_path="/home/mannu/code/work/micromort/micromort/resources/trained_models/oneVsAll_linear_SVM_mean_embeddings/")
+            self.polarity_classifier = PolarityClassifier()
 
 
     def apply_classifiers(self, articleBody, articleTitle):
         labels = {
-            "life_domains" : self.getLifeDomains(),
-            "polarity" : self.getPolarity(),
+            "life_domains" : self.getLifeDomains(articleBody, articleTitle),
+            "polarity" : self.getPolarity(articleBody, articleTitle),
         }
         return labels
 
     def getLifeDomains(self, articleBody, articleTitle):
-        labels = self.life_domain_classifier.predict_single(articleTitle + articleBody, True)
-        return labels
+        return self.life_domain_classifier.predict_single(articleTitle + articleBody, True)
+
 
     def getPolarity(self, articleBody, articleTitle):
-        polarity = self.polarity_classifier.predict(articleTitle + articleBody)
+        return self.polarity_classifier.predict_single(articleTitle + articleBody)
+        

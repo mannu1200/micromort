@@ -1,15 +1,33 @@
-import pickle
-import nltk
+import nltk, os, gensim, joblib, pickle
 import numpy as np
-from sklearn.externals import joblib
+
+
+
+def get_word2vec(sentences, location="./resources/word_embeddings/glove.6B.300d.txt"):
+    """Returns trained word2vec
+    
+    Args:
+        sentences: iterator for sentences
+        
+        location (str): Path to save/load word2vec
+    """
+    if os.path.exists(location):
+        print('Found {}'.format(location))
+        model = gensim.models.KeyedVectors.load_word2vec_format("/home/mannu/code/work/micromort/data/wordEmbeddings/word2vec-GoogleNews-vectors/GoogleNews-vectors-negative300.bin", binary=True)
+        #model = KeyedVectors.load_word2vec_format("/home/mannu/data/wordEmbeddings/word2v.txt")
+        #gensim.models.Word2Vec.load("/home/mannu/data/wordEmbeddings/word2v.txt")
+        return model
+    print('{} not found. training model'.format(location))
+    model = gensim.models.Word2Vec(sentences, size=100, window=5, min_count=5, workers=4)
+    print('Model done training. Saving to disk')
+    model.save(location)
+    return model
 
 class MyTokenizer:
     def __init__(self):
         pass
-    
     def fit(self, X, y=None):
         return self
-    
     def transform(self, X):
         transformed_X = []
         for document in X:
@@ -18,7 +36,6 @@ class MyTokenizer:
                 tokenized_doc += nltk.word_tokenize(sent)
             transformed_X.append(np.array(tokenized_doc))
         return np.array(transformed_X)
-    
     def fit_transform(self, X, y=None):
         return self.transform(X)
 
@@ -46,22 +63,24 @@ class MeanEmbeddingVectorizer(object):
 
 
 
+#TODO: Use inheritance to make these variables accessible by both of the classes
+#  instead of defining them globally
+w2v = get_word2vec("")
+mean_embedding_vectorizer = MeanEmbeddingVectorizer(w2v)
+
+
+lb_model = ""
+
 class PolarityClassifier:
-    def __init__(self, base_path = "./resources/trained_models/"):
-        classifier_model = base_path + "polarityModel.sav"
-        mean_embedding_vectorizer_model = base_path + "oneVsAll_linear_SVM_mean_embeddings/mean_embedding_vectorizer.sav"
-        mlb_model = base_path + "mlb"
+
+    def __init__(self, base_path = "./resources/trained_models/polarity_models/"):
+        classifier_model = base_path + "svm_mean_embeddings"
         self.classifier = pickle.load(open(classifier_model, 'rb'))
-        self.mean_embedding_vectorizer = joblib.load(mean_embedding_vectorizer_model)
-        self.mlb = pickle.load(open(mlb_model, 'rb'))
     
     def predict_single(self, article):
-        pred = self.mlb.inverse_transform(
-            self.classifier_model.predict(
-                self.mean_embedding_vectorizer.fit_transform([article])
-            )
-        )[0]
-        return list(pred)
+        
+        pred = self.classifier.predict( mean_embedding_vectorizer.fit_transform([article]))[0]
+        return pred
 
     def predict_all(self, articles):
         result = []
@@ -72,13 +91,10 @@ class PolarityClassifier:
 
 
 class Classifier:
-    
     def __init__(self, base_path = "./resources/trained_models/oneVsAll_linear_SVM_mean_embeddings/"):
         classifier_model = base_path + "svmWithEmbeddings.sav"
-        mean_embedding_vectorizer_model = base_path + "mean_embedding_vectorizer.sav"
         mlb_model = base_path + "mlb"
         self.classifier = pickle.load(open(classifier_model, 'rb'))
-        self.mean_embedding_vectorizer = joblib.load(mean_embedding_vectorizer_model)
         self.mlb = pickle.load(open(mlb_model, 'rb'))
 
         self.class_mapping = {
@@ -91,7 +107,7 @@ class Classifier:
 
         pred = self.mlb.inverse_transform(
             self.classifier.predict(
-                self.mean_embedding_vectorizer.fit_transform([article])
+                mean_embedding_vectorizer.fit_transform([article])
             )
         )[0]
         if with_label:
